@@ -1,0 +1,26 @@
+{
+  "appId": "com.rezonans.etimesgut",
+  "appName": "Rezonans Etimesgut",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2500,
+      "backgroundColor": "#581c87",
+      "androidSplashResourceName": "splash",
+      "iosSplashResourceName": "Default",
+      "showSpinner": false,
+      "launchAutoHide": false
+    },
+    "StatusBar": {
+      "style": "Dark",
+      "backgroundColor": "#581c87",
+      "overlaysWebView": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

@@ -1,0 +1,49 @@
+<!--
+  iOS Info.plist PATCH
+  ====================
+  After running "npx cap add ios", open:
+    ios/App/App/Info.plist
+
+  Add the following keys INSIDE the root <dict>:
+-->
+
+<!-- Push Notifications background mode -->
+<key>UIBackgroundModes</key>
+<array>
+    <string>fetch</string>
+    <string>remote-notification</string>
+</array>
+
+<!-- Custom URL scheme for deep linking: rezonans://app/... -->
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleURLName</key>
+        <string>com.rezonans.etimesgut</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>rezonans</string>
+        </array>
+    </dict>
+</array>
+
+<!-- Permission usage descriptions (required by App Store) -->
+<key>NSUserNotificationUsageDescription</key>
+<string>Yeni mesajlar ve duyurular için bildirim almak istiyoruz.</string>
+
+<!-- Safe area & status bar -->
+<key>UIViewControllerBasedStatusBarAppearance</key>
+<false/>
+
+<key>UIStatusBarStyle</key>
+<string>UIStatusBarStyleLightContent</string>
+
+<!--
+  ios/App/App/Info.plist FULL REFERENCE (key additions shown in context):
+
+  The file already has CFBundleDisplayName, CFBundleIdentifier etc.
+  Just add the blocks above inside the existing root <dict> ... </dict>.
+
+  Your CFBundleIdentifier should be: com.rezonans.etimesgut
+  Your CFBundleDisplayName should be: Rezonans Etimesgut
+-->
