@@ -18,7 +18,7 @@ web/ios/.idea/
 .env
 .env.local
 .env*.local
-backend/config/db.php
+backend/api/config.php
 
 # OS
 .DS_Store

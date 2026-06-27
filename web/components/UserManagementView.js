@@ -7,11 +7,15 @@ import ConfirmModal from "./ConfirmModal";
 
 const TR_MAP = { 'ı':'i','İ':'i','ğ':'g','Ğ':'g','ş':'s','Ş':'s','ç':'c','Ç':'c','ö':'o','Ö':'o','ü':'u','Ü':'u' };
 
-function nameToEmail(name) {
-  return name
-    .split('').map(ch => TR_MAP[ch] ?? ch).join('')
-    .toLowerCase().replace(/\s+/g, '')
-    + '@rezonansetimesgut';
+function slugify(str) {
+  return str.trim().split('').map(ch => TR_MAP[ch] ?? ch).join('').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function buildEmail(firstName, lastName) {
+  const f = slugify(firstName);
+  const l = slugify(lastName);
+  if (!f && !l) return '';
+  return (f + l) + '@rezonansetimesgut';
 }
 
 function generatePassword() {
@@ -19,7 +23,7 @@ function generatePassword() {
   return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-const emptyForm = { name: '', email: '', role: 'student' };
+const emptyForm = { firstName: '', lastName: '', email: '', role: 'student' };
 
 function CreatedModal({ name, password, onClose }) {
   const [copied, setCopied] = useState(false);
@@ -186,8 +190,11 @@ export default function UserManagementView() {
     const { name, value } = e.target;
     setForm((cur) => {
       const next = { ...cur, [name]: value };
-      if (name === 'name' && !cur.email) {
-        next.email = value.trim() ? nameToEmail(value) : '';
+      // Auto-generate email from first+last name unless user edited it manually
+      if (name === 'firstName' || name === 'lastName') {
+        const f = name === 'firstName' ? value : cur.firstName;
+        const l = name === 'lastName'  ? value : cur.lastName;
+        next.email = buildEmail(f, l);
       }
       return next;
     });
@@ -195,10 +202,11 @@ export default function UserManagementView() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { ...form, password: generatedPw };
+    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+    const payload = { ...form, name: fullName, password: generatedPw };
     await addUser(payload);
     await refresh();
-    setCreatedModal({ name: form.name, password: generatedPw });
+    setCreatedModal({ name: fullName, password: generatedPw });
     setForm(emptyForm);
     setGeneratedPw('');
     setIsFormVisible(false);
@@ -273,13 +281,18 @@ export default function UserManagementView() {
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Yeni Kullanıcı</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Ad Soyad *</span>
-              <input type="text" name="name" value={form.name} onChange={handleChange} className={inputCls} required />
+              <span className="mb-2 block text-sm font-medium text-slate-700">Ad *</span>
+              <input type="text" name="firstName" value={form.firstName} onChange={handleChange} className={inputCls} placeholder="Ad" required />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">E-posta *</span>
-              <input type="email" name="email" value={form.email} onChange={handleChange} className={inputCls} required />
+              <span className="mb-2 block text-sm font-medium text-slate-700">Soyad *</span>
+              <input type="text" name="lastName" value={form.lastName} onChange={handleChange} className={inputCls} placeholder="Soyad" required />
+            </label>
+
+            <label className="block md:col-span-2">
+              <span className="mb-2 block text-sm font-medium text-slate-700">E-posta (otomatik)</span>
+              <input type="email" name="email" value={form.email} onChange={handleChange} className={inputCls} placeholder="adsoyad@rezonansetimesgut" required />
             </label>
 
             <label className="block">

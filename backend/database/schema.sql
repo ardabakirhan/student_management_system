@@ -1,14 +1,13 @@
 -- ============================================================
 --  Rezonans Sanat ve Kişisel Gelişim Merkezi — Veritabanı Şeması
---  Sürüm: 2.0  |  Charset: utf8mb4
+--  Sürüm: 2.1  |  Charset: utf8mb4
 --
---  Kurulum:
+--  Kurulum (yeni veritabanı):
 --    cPanel phpMyAdmin → veritabanınızı seçin → Import → bu dosyayı seçin → Go
 --
---  İlk giriş:
---    E-posta : admin@rezonansetimesgut
---    Şifre   : Admin123!
---    Giriş sonrası admin şifreyi değiştirmek zorundadır.
+--  NOT: Bu dosyada INSERT satırı yoktur. Canlı veritabanındaki
+--  mevcut veriler korunur. Tablolar zaten varsa CREATE IF NOT EXISTS
+--  sayesinde dokunulmaz.
 -- ============================================================
 
 SET NAMES utf8mb4;
@@ -169,17 +168,5 @@ CREATE TABLE IF NOT EXISTS `weekly_schedule` (
   `room`         VARCHAR(80)   NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ── İlk admin kullanıcısı ────────────────────────────────────
--- Şifre: Admin123!  (bcrypt, cost=10)
--- İlk girişte must_change_password = 0 (admin zaten şifresini biliyor)
-INSERT INTO `users` (`name`, `email`, `password_hash`, `role`, `must_change_password`)
-VALUES (
-  'Admin',
-  'admin@rezonansetimesgut',
-  '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-  'admin',
-  0
-);
 
 SET FOREIGN_KEY_CHECKS = 1;
