@@ -1,0 +1,94 @@
+workflows:
+  ios-unsigned:
+    name: iOS Unsigned IPA (AltStore sideload)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      vars:
+        APP_DIR: web
+        XCODE_WORKSPACE: "$APP_DIR/ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          cd $APP_DIR
+          npm ci
+
+      - name: Build Next.js static export
+        script: |
+          cd $APP_DIR
+          npm run build
+
+      - name: Add iOS platform if missing
+        script: |
+          cd $APP_DIR
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+
+      - name: Sync Capacitor iOS
+        script: |
+          cd $APP_DIR
+          npx cap sync ios
+
+      - name: Apply iOS native patches
+        script: |
+          APPDELEGATE="$APP_DIR/ios/App/App/AppDelegate.swift"
+          INFOPLIST="$APP_DIR/ios/App/App/Info.plist"
+
+          cp mobile/ios-appdelegate-patch.swift "$APPDELEGATE"
+
+          /usr/libexec/PlistBuddy -c "Delete :UIBackgroundModes" "$INFOPLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$INFOPLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string fetch" "$INFOPLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:1 string remote-notification" "$INFOPLIST"
+
+          /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$INFOPLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$INFOPLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$INFOPLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.rezonans.etimesgut" "$INFOPLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$INFOPLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string rezonans" "$INFOPLIST"
+
+          /usr/libexec/PlistBuddy -c "Delete :NSUserNotificationUsageDescription" "$INFOPLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSUserNotificationUsageDescription string Yeni mesajlar ve duyurular için bildirim almak istiyoruz." "$INFOPLIST"
+
+          /usr/libexec/PlistBuddy -c "Delete :UIViewControllerBasedStatusBarAppearance" "$INFOPLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIViewControllerBasedStatusBarAppearance bool false" "$INFOPLIST"
+
+          /usr/libexec/PlistBuddy -c "Delete :UIStatusBarStyle" "$INFOPLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIStatusBarStyle string UIStatusBarStyleLightContent" "$INFOPLIST"
+
+      - name: Archive unsigned app
+        script: |
+          cd $APP_DIR/ios/App
+          xcodebuild archive \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath $CM_BUILD_DIR/App.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            DEVELOPMENT_TEAM=""
+
+      - name: Package unsigned IPA
+        script: |
+          mkdir -p $CM_BUILD_DIR/Payload
+          cp -r $CM_BUILD_DIR/App.xcarchive/Products/Applications/*.app $CM_BUILD_DIR/Payload/
+          cd $CM_BUILD_DIR
+          zip -r App-unsigned.ipa Payload
+
+    artifacts:
+      - $CM_BUILD_DIR/App-unsigned.ipa
+
+    publishing:
+      email:
+        recipients:
+          - ardabakirhan38@gmail.com
+        notify:
+          success: true
+          failure: true
