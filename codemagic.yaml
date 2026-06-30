@@ -7,7 +7,7 @@ workflows:
       node: 22
       vars:
         APP_DIR: web
-        XCODE_WORKSPACE: "$APP_DIR/ios/App/App.xcworkspace"
+        XCODE_PROJECT: "$APP_DIR/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
     scripts:
       - name: Install npm dependencies
@@ -24,7 +24,7 @@ workflows:
         script: |
           set -e
           cd $APP_DIR
-          if [ ! -f "ios/App/App.xcworkspace/contents.xcworkspacedata" ]; then
+          if [ ! -f "ios/App/App.xcodeproj/project.pbxproj" ]; then
             rm -rf ios
             npx cap add ios
           fi
@@ -65,14 +65,14 @@ workflows:
       - name: Archive unsigned app
         script: |
           set -e
-          if [ ! -d "$XCODE_WORKSPACE" ]; then
-            echo "[fatal] Workspace not found at $XCODE_WORKSPACE"
+          if [ ! -d "$XCODE_PROJECT" ]; then
+            echo "[fatal] Xcode project not found at $XCODE_PROJECT"
             find "$APP_DIR/ios" -maxdepth 4 2>/dev/null || echo "$APP_DIR/ios does not exist"
             exit 1
           fi
 
           xcodebuild archive \
-            -workspace "$XCODE_WORKSPACE" \
+            -project "$XCODE_PROJECT" \
             -scheme "$XCODE_SCHEME" \
             -configuration Release \
             -archivePath $CM_BUILD_DIR/App.xcarchive \
