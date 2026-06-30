@@ -22,8 +22,10 @@ workflows:
 
       - name: Add iOS platform if missing
         script: |
+          set -e
           cd $APP_DIR
-          if [ ! -d "ios" ]; then
+          if [ ! -f "ios/App/App.xcworkspace/contents.xcworkspacedata" ]; then
+            rm -rf ios
             npx cap add ios
           fi
 
@@ -62,10 +64,16 @@ workflows:
 
       - name: Archive unsigned app
         script: |
-          cd $APP_DIR/ios/App
+          set -e
+          if [ ! -d "$XCODE_WORKSPACE" ]; then
+            echo "[fatal] Workspace not found at $XCODE_WORKSPACE"
+            find "$APP_DIR/ios" -maxdepth 4 2>/dev/null || echo "$APP_DIR/ios does not exist"
+            exit 1
+          fi
+
           xcodebuild archive \
-            -workspace App.xcworkspace \
-            -scheme App \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
             -configuration Release \
             -archivePath $CM_BUILD_DIR/App.xcarchive \
             -destination "generic/platform=iOS" \
